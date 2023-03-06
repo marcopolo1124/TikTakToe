@@ -98,35 +98,28 @@ isDraw (Moves moves) = length moves >= 9
 move :: Player -> Position -> StateT Moves (ExceptT String IO) ()
 move player pos = do
     Moves moves <- get
-    let winner = whoWon moves
-        takenPositions = getOccupied moves
+    let takenPositions = getOccupied moves
         lastPlayer = getLastPlayer moves
     -- If board state given has a winner, then don't do anything
-    case winner of
-        -- If there are no winners, check if input is valid
-        Nothing -> if (lastPlayer == player) || (pos `elem` takenPositions)
+    if (lastPlayer == player) || (pos `elem` takenPositions)
             -- Wrong input will cause the state to not change, and same player can move again
-            then do
-                liftIO $ putStrLn "Bad input"
-                pure ()
-            -- If everything is valid, add move to stack
-            else
-                let newState = Move (player, pos) : moves
-                    winner = whoWon newState
-                in case winner of
-                    Nothing -> do
-                        if isDraw $ Moves newState
-                            then do
-                                liftIO $ putStrLn "Draw!"
-                                throwError "Draw!"
-                            else put (Moves newState)
-                    _ -> do
-                        liftIO $ putStrLn (show player ++ " wins!")
-                        throwError $ show player ++ " wins!"
-        -- If there is a winner, give the original board back unchanged
-        _ -> do
-            liftIO $ putStrLn (show lastPlayer ++ " wins!")
-            throwError (show lastPlayer ++ " wins!")
+        then do
+            liftIO $ putStrLn "Bad input"
+            pure ()
+        -- If everything is valid, add move to stack
+        else
+            let newState = Move (player, pos) : moves
+                winner = whoWon newState
+            in case winner of
+                Nothing -> do
+                    if isDraw $ Moves newState
+                        then do
+                            liftIO $ putStrLn "Draw!"
+                            throwError "Draw!"
+                        else put (Moves newState)
+                _ -> do
+                    liftIO $ putStrLn (show player ++ " wins!")
+                    throwError $ show player ++ " wins!"
 
 conditionSets :: [S.Set Position]
 conditionSets = S.fromList <$> [
